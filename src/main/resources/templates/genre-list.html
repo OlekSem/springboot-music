@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout :: content}">
+<head>
+	<meta charset="UTF-8">
+	<title>Genre List</title>
+</head>
+<body>
+<div layout:fragment="content">
+	<h1>All Genres</h1>
+	<a href="genres/add">Add a genre</a>
+	<table>
+		<thead>
+		<tr>
+			<th>ID</th>
+			<th>Name</th>
+			<th>Description</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr th:each="genre : ${genres}">
+			<td th:text="${genre.id}"></td>
+			<td th:text="${genre.name}"></td>
+			<td th:text="${genre.description}"></td>
+		</tr>
+		</tbody>
+	</table>
+</div>
+</body>
+</html>
