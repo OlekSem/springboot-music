@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
@@ -23,4 +25,7 @@ public class Genre {
     @Column(length = 1000)
     @NonNull
     private String description;
+
+    @ManyToMany(mappedBy = "genres")
+    private List<Song> songs;
 }

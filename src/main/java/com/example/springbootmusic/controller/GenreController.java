@@ -17,7 +17,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/genres")
-public class GenresController {
+public class GenreController {
     @Autowired
     private GenreService genreService;
 

@@ -1,26 +1,94 @@
 package com.example.springbootmusic.data;
 
 import com.example.springbootmusic.model.entity.Genre;
+import com.example.springbootmusic.model.entity.Song;
 import com.example.springbootmusic.repository.GenreRepository;
+import com.example.springbootmusic.repository.SongRepository;
 import com.github.javafaker.Faker;
+import com.mpatric.mp3agic.ID3v1;
+import com.mpatric.mp3agic.Mp3File;
+import com.mpatric.mp3agic.UnsupportedTagException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 @Component
 @RequiredArgsConstructor
 public class AppSeedData {
+    @Value( "${upload.path}")
+    private String uploadPath;
+
     private final GenreRepository genreRepository;
+    private final SongRepository songRepository;
     private final Faker faker = new Faker();
     //Цей метод буде Seed даних у БД
     //Цей метод в java Spring буде зпускати автоматично
     @PostConstruct
-    public void seed() {
+    public void seed() throws IOException{
+        seedGenres();
+        seedSongs();
+    }
+
+
+
+    private void seedSongs() throws IOException {
+        if (songRepository.count() > 0) return;
+        System.out.println("---------Seed songs-----------");
+
+        var paths = Paths.get(uploadPath);
+
+        var genres = genreRepository.findAll();
+        Random random = new Random();
+
+
+        Files.list(paths)
+                .filter(Files::isRegularFile)
+                .forEach(file -> {
+                    Mp3File mp3file = null;
+                    try {
+                        mp3file = new Mp3File(file);
+                        if (mp3file.hasId3v2Tag()) {
+                            ID3v1 id3v2Tag = mp3file.getId3v2Tag();
+//                            System.out.println("Track: " + id3v2Tag.getTrack());
+                            System.out.println("Artist: " + id3v2Tag.getArtist());
+                            System.out.println("Title: " + id3v2Tag.getTitle());
+                            System.out.println("Album: " + id3v2Tag.getAlbum());
+                            System.out.println("Year: " + id3v2Tag.getYear());
+//                            System.out.println("Genre: " + id3v2Tag.getGenre() + " (" + id3v2Tag.getGenreDescription() + ")");
+//                            System.out.println("Comment: " + id3v2Tag.getComment());
+                            System.out.println("--------------");
+
+                            Song song = new Song();
+                            song.setName(id3v2Tag.getTitle());
+                            song.setArtist(id3v2Tag.getArtist());
+                            song.setDuration_s(mp3file.getLengthInSeconds());
+                            song.setAlbum(id3v2Tag.getAlbum());
+                            song.setFileName(file.getFileName().toString());
+
+                            Collections.shuffle(genres);
+                            List<Genre> randomGenres = genres.stream().limit(random.nextInt(3)).toList();
+                            song.setGenres(randomGenres);
+
+                            songRepository.save(song);
+                        }
+                    } catch (Exception e) {
+
+                    }
+                });
+    }
+
+    private void seedGenres() {
         if (genreRepository.count() > 0) return;
-        System.out.println("---------Run seed data-----------");
+        System.out.println("---------Seed genres-----------");
         String musicGenre = faker.music().genre();
         System.out.println("Music Genre: " + musicGenre);
 

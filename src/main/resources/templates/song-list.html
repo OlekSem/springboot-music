@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="uk"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+	<title>Пісні</title>
+</head>
+<body>
+<div layout:fragment="content">
+	<h1 class="text-3xl font-bold mb-4 text-gray-900 text-center">
+		Список пісень
+	</h1>
+	<div th:if="${#lists.isEmpty(songs)}">
+		<p class="text-gray-500">Пісні відсутні</p>
+	</div>
+	<div th:if="${!#lists.isEmpty(songs)}" class="space-y-4">
+		<div th:each="song : ${songs}"
+		     class="border border-gray-300 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition flex justify-between">
+			<div>
+				<h2 class="text-xl font-bold text-gray-900" th:text="${song.name}"></h2>
+				<p class="text-gray-700">
+					<span class="font-semibold">Виконавець:</span>
+					<span th:text="${song.artist}"></span>
+				</p>
+				<p class="text-gray-700">
+					<span class="font-semibold">Альбом:</span>
+					<span th:text="${song.album}"></span>
+				</p>
+				<p class="text-gray-700">
+					<span class="font-semibold">Жанри:</span>
+				</p>
+				<div th:each="genre : ${song.genres}">
+					<span th:text="${genre.name}"></span>
+				</div>
+			</div>
+			<div>
+				<audio id="audioElement" th:src="@{/songs/{filename}(filename=${song.fileName})}">
+
+				</audio>
+				<audio controls class="prevent-overlap">
+					<source th:src="@{/songs/{filename}(filename=${song.fileName})}" type="audio/mp3">
+					Your browser does not support the audio element.
+				</audio>
+			</div>
+		</div>
+	</div>
+	<script>
+		const audios = document.querySelectorAll(".prevent-overlap");
+		console.log(audios);
+
+		audios.forEach(audio => {
+			audio.addEventListener('play', () => {
+				audios.forEach(otherAudio => {
+					if (otherAudio !== audio) {
+						otherAudio.pause();
+					}
+				})
+			})
+		})
+	</script>
+</div>
+</body>
+</html>
