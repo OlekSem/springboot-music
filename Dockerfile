@@ -1,26 +1,33 @@
-# Use an official Maven image to build the application
+# syntax=docker/dockerfile:1
+
 FROM maven:3.9-eclipse-temurin-17 AS build
 
-# Set the working directory
 WORKDIR /app
 
-# Copy the project files to the working directory
+# Copy pom first for dependency caching
 COPY pom.xml .
+
+# Download dependencies
+RUN mvn dependency:go-offline
+
+# Copy source code
 COPY src ./src
 
-# Build the application using Maven
-RUN mvn clean package
+# Build app
+RUN mvn clean package -DskipTests
 
-# Use a JDK image to run the application
-FROM eclipse-temurin:17-jdk
 
-# Set the working directory
+FROM eclipse-temurin:17-jre
+
 WORKDIR /app
 
-EXPOSE 8087
+EXPOSE 8080
 
-# Copy the built jar file from the Maven build stage
-COPY --from=build /app/target/*.jar ./app.jar
+# Create app folders
+RUN mkdir -p /app/songs /app/images
 
-# Specify the command to run the application
-CMD ["java", "-jar", "app.jar"]
+# Copy jar from build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Start application
+ENTRYPOINT ["java", "-jar", "app.jar"]

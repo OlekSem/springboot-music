@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="uk"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      xmlns:th="http://www.thymeleaf.org">
+      xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,9 +18,25 @@
 
         <div class="flex gap-6">
             <a href="/" class="hover:text-green-100 transition">Головна</a>
+        </div>
+
+        <div class="flex gap-6" sec:authorize="!isAuthenticated()">
             <a href="/login" class="hover:text-green-100 transition">Увійти</a>
             <a href="/register" class="hover:text-green-100 transition">Реєстрація</a>
-            <a href="/genres" class="hover:text-green-100 transition">Genres</a>
+        </div>
+
+        <div class="flex gap-4 items-center" sec:authorize="isAuthenticated()">
+            <div class="fleg gap-6">
+                <a href="/genres" class="hover:text-green-100 transition">Genres</a>
+                <a href="/songs" class="hover:text-green-100 transition">Songs</a>
+            </div>
+            <span class="font-medium" th:text="${#authentication.name}">Username</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit"
+                        class="bg-white text-green-600 px-3 py-1 rounded hover:bg-green-100 transition">
+                    Вийти
+                </button>
+            </form>
         </div>
 
         

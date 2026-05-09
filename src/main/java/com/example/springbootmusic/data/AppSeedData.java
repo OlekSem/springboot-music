@@ -1,25 +1,23 @@
 package com.example.springbootmusic.data;
 
-import com.example.springbootmusic.model.entity.Genre;
-import com.example.springbootmusic.model.entity.Song;
+import com.example.springbootmusic.model.entity.*;
 import com.example.springbootmusic.repository.GenreRepository;
+import com.example.springbootmusic.repository.RoleRepository;
 import com.example.springbootmusic.repository.SongRepository;
+import com.example.springbootmusic.repository.UserRepository;
 import com.github.javafaker.Faker;
 import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.Mp3File;
-import com.mpatric.mp3agic.UnsupportedTagException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -29,6 +27,9 @@ public class AppSeedData {
 
     private final GenreRepository genreRepository;
     private final SongRepository songRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
     private final Faker faker = new Faker();
     //Цей метод буде Seed даних у БД
     //Цей метод в java Spring буде зпускати автоматично
@@ -36,9 +37,50 @@ public class AppSeedData {
     public void seed() throws IOException{
         seedGenres();
         seedSongs();
+        seedRoles();
+        seedUsers();
     }
 
+    private void seedRoles() {
 
+        if (roleRepository.count() > 0) {
+            return;
+        }
+
+        Role userRole = new Role();
+        userRole.setName(RoleEnum.USER);
+        userRole.setDescription("Default user");
+
+        Role adminRole = new Role();
+        adminRole.setName(RoleEnum.ADMIN);
+        adminRole.setDescription("Administrator");
+
+        Role ownerRole = new Role();
+        ownerRole.setName(RoleEnum.OWNER);
+        ownerRole.setDescription("Owner");
+
+        roleRepository.saveAll(List.of(
+                userRole,
+                adminRole,
+                ownerRole
+        ));
+
+        System.out.println("---------Seed roles-----------");
+    }
+
+    private void seedUsers() {
+        if(userRepository.count() == 0) {
+            Role role = roleRepository.findByName(RoleEnum.OWNER)
+                    .orElseThrow(() -> new RuntimeException("OWNER role not found"));
+            User user = new User();
+            user.setUsername("admin@gmail.com");
+            user.setEmail("admin@gmail.com");
+            user.setImage("default.png");
+            user.setPassword(passwordEncoder.encode("123456"));
+            user.setRole(role);
+            userRepository.save(user);
+        }
+    }
 
     private void seedSongs() throws IOException {
         if (songRepository.count() > 0) return;
@@ -75,13 +117,17 @@ public class AppSeedData {
                             song.setFileName(file.getFileName().toString());
 
                             Collections.shuffle(genres);
-                            List<Genre> randomGenres = genres.stream().limit(random.nextInt(3)).toList();
+                            List<Genre> randomGenres =
+                                    genres.stream()
+                                            .limit(random.nextInt(3) + 1)
+                                            .toList();
                             song.setGenres(randomGenres);
 
                             songRepository.save(song);
                         }
                     } catch (Exception e) {
-
+                        System.out.println("Error reading file: " + file);
+                        e.printStackTrace();
                     }
                 });
     }
